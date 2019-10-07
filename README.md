@@ -41,6 +41,7 @@ sudo yum install netcdf-devel.x86_64
 
 Download the sources from github via the website or using git clone and then build and deploy fpocket using the following commands.
 
+#### Compiling on Linux
 
 ```
 git clone https://github.com/Discngine/fpocket.git
@@ -48,6 +49,15 @@ cd fpocket
 make 
 sudo make install
 ```
+
+#### Compiling on Mac
+```
+git clone https://github.com/Discngine/fpocket.git
+cd fpocket
+make ARCH=MACOSXX86_64
+sudo make install
+```
+
 
 
 End with an example of getting some data out of the system or using it for a little demo
@@ -65,6 +75,50 @@ fpocket should state when it's beginning to search pocket and also when it's end
 
 ## User Manual
 For now the user manual (still the one from fpocket 2.0) can be found in the doc folder. When I have some time to kill (or if somebody else has) we could add that here somewhere.
+
+## Frequent issues encountered
+### netcdf issues
+```
+cannot find -lnetcdf
+```
+mdpocket supports reading and writing NETCDF formatted files. In order to use this you need to install the netcdf development libraries on your system. 
+In centos this can be achieved like this : 
+```
+yum install -y epel-release #if the epel repo is not yet activated on your system
+yum install -y netcdf-devel
+
+```
+
+Run make again after installing this library. Mdpocket should build just fine now. 
+
+### stdc++ issues
+```
+cannot find -lstdc++
+```
+You need to install the stc++ static libraries to build fpocket & mdpocket. On centos 7.4 this can be done like this : 
+```
+yum install -y libstc++-static
+```
+
+### linking to molfile plugin issues
+If you observe an error similar to this one
+```
+ld: warning: ignoring file plugins/MACOSXX86/molfile/libmolfile_plugin.a, file was built for archive which is not the architecture being linked (x86_64): plugins/MACOSXX86/molfile/libmolfile_plugin.a
+Undefined symbols for architecture x86_64:
+  "_molfile_parm7plugin_init", referenced from:
+      _read_topology in topology.o
+  "_molfile_parm7plugin_register", referenced from:
+      _read_topology in topology.o
+ld: symbol(s) not found for architecture x86_64
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+make[1]: *** [bin/fpocket] Error 1
+make: *** [all] Error 2
+```
+then statically built libmolfile_plugin is not compatible with your machine. First check out that the ARCH variable set in the first line of the Makefile of fpocket actually reflects the architecture you want. For now I'm trying to support linux 64 bit systems and OSX 64 (LINUXAMD64) bit systems built with clang (MACOSXX86). So both should work out of the box. If they do not, you might need to build the molfile plugin for your architecture. All available system architectures for the molfile plugin can be found in the plugins folder tree : [plugins directory](https://github.com/Discngine/fpocket/tree/master/plugins). 
+Here you can find more information on how to build the molfile plugin on CentOS 7.4: 
+[compile molfile plugin on centos 7.4 - Discngine blog post](https://www.discngine.com/blog/2019/5/25/building-the-vmd-molfile-plugin-from-source-code)
+Once built, copy the architecture folder into the fpocket/plugins directory and make sure to declare this architecture in the ARCH variable in the Makefile. Finally run make again.
+If you manage to build for other architectures and it works, I'd be happy to accept PR's with the relevant plugin architectures as I cannot build all of them on my own ;).
 
 ## Contributing
 
